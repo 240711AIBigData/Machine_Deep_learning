@@ -677,3 +677,109 @@ print(test_target)
 
 <br>
 
+### 03. 수상한 도미 한 마리
+> k-최근접 이웃 훈련
+```python
+  from sklearn.neighbors import KNeighborsClassifier
+  kn = KNeighborsClassifier()
+  kn.fit(train_input, train_target)
+  kn.score(test_input, test_target)
+```
+- k-최근접 이웃은 훈련 데이터 저장하는 것이 훈련의 전부
+
+> 결과
+```python
+
+```
+- 완벽한 결과(테스트 세트의 도미와 빙어를 모두 올바르게 분류함)
+
+<br>
+
+> 길이 25, 무게 150 인 도미 데이터 결과 확인
+```pythoon
+  print(kn.predict([[25, 150]]))
+```
+
+> 결과
+```python
+  [0.]
+```
+- 도미(1)가 아닌 빙어(0)로 예측
+
+<br>
+
+> 산점도 확인
+```python
+  import matplotlib.pyplot as plt
+  plt.scatter(train_input[:,0], train_input[:,1])
+  plt.scatter(25, 150, marker='^')    # marker 매개변수는 모양 지정(^ = 삼각형, D = 마름모)
+  plt.xlabel('length')
+  plt.ylabel('weight')
+  plt.show()
+```
+
+> 결과
+
+![image](https://github.com/user-attachments/assets/ad257003-d60d-45b2-83a2-7412edde175d)
+
+- 해당 샘플을 도미 데이터에 더 가깝지만 빙어 데이터로 예측된 상황
+
+- k-최근접 이웃은 주변의 샘플 중에서 다수인 클래스를 예측으로 사용
+
+  - KNeighborsClassifier 클래스는 주어진 샘플에서 가장 가까운 이웃을 찾아주는 kneighbors() 메서드 제공
+ 
+    - 이웃까지의 거리와 이웃 샘플의 인덱스 반환
+   
+    - KNeighborsClassifier 클래스의 이웃 개수인 n_neighbors 기본값은 5 이므로 5개의 이웃 반환됨
+
+<br>
+
+> kneighbors() 사용
+```python
+  distances, indexes = kn.kneighbors([[25, 150]])
+  
+  plt.scatter(train_input[:,0], train_input[:,1])
+  plt.scatter(25, 150, marker='^')
+  plt.scatter(train_input[indexes,0], train_input[indexes,1], marker='D')
+  plt.xlabel('length')
+  plt.ylabel('weight')
+  plt.show()
+```
+- 넘파이 배열 인덱싱 방법 사용
+
+  - indexes 배열을 사용해 훈련 데이터 중 이웃 샘플을 따로 구분해 표현
+
+> 결과
+
+![image](https://github.com/user-attachments/assets/652ee065-5312-4437-90b6-26c45e43dcd4)
+
+- 가까운 이웃에 빙어가 압도적으로 많음
+
+<br>
+
+> kneighbors() 메서드에서 반환한 distances 배열 출력
+```python
+  print(distances)
+```
+
+> 결과
+```python
+  [[ 92.00086956 130.48375378 130.73859415 138.32150953 138.39320793]]
+```
+- 이 배열에는 이웃 샘플까지의 거리가 담겨있음
+
+<br>
+
+### 04. 기준 맞추기
+
+
+
+
+
+
+
+
+
+
+
+
