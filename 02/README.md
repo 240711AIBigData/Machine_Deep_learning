@@ -874,4 +874,140 @@ print(test_target)
 
 <br>
 
-### 06. 
+### 06. 전처리 데이터로 모델 훈련
+> 표준점수로 변환한 train_scaled 와 샘플의 삼점도
+```python
+  plt.scatter(train_scaled[:, 0], train_scaled[:, 1])
+  plt.scatter(25, 150, marker='^')
+  plt.xlabel('length')
+  plt.ylabel('weight')
+  plt.show()
+```
+
+> 결과
+
+![image](https://github.com/user-attachments/assets/776a7ffa-a6e4-4fe5-98f9-614d34d05545)
+
+- 훈련 세트를 mean(평균)으로 빼고 std(표준편차)로 나줬기 때문에 값이 범위가 크게 달라진 것
+
+  - 샘플 [25, 150] 을 동일한 비율로 변환하지 않으면 이런 현상 발생
+
+- 훈련 세트의 mean, std 를 이용해 변환해야 함
+
+  - 샘플 하나만으로는 평균과 표준편차 구할 수 없음
+
+<br>
+
+> 동일한 기준으로 샘플 변환
+```python
+  new = ([25, 150] - mean) / std
+  plt.scatter(train_scaled[:, 0], train_scaled[:, 1])
+  plt.scatter(new[0], new[1], marker='^')
+  plt.xlabel('length')
+  plt.ylabel('weight')
+  plt.show()
+```
+
+> 결과
+
+![image](https://github.com/user-attachments/assets/7e61c404-c189-4a70-9916-17be67dc9f28)
+
+- 표준편차로 변환하기 전의 산점도와 거의 동일
+
+  - x 축과 y 축의 범위가 -1.5 ~ 1.5 사이로 바뀜
+ 
+  - 훈련 데이터의 두 특성이 비슷한 범위를 차지
+
+<br>
+
+> 위 데이터셋으로 k-최근접 이웃 모델 훈련
+```python
+  kn.fit(train_scaled, train_target)
+  test_scaled = (test_input - mean) / std
+  print(kn.score(test_scaled, test_target))
+  print(kn.predict([new]))
+```
+- 훈련 후 테스트 세트로 평가시 주의
+
+  - 테스트 세트도 훈련 세트의 평균과 표준편차로 변환
+ 
+    - 하지 않으면 데이터의 스케일이 같아지지 않으므로 훈련 모델 정확하지 않음
+
+> 결과
+```python
+  1.0
+  [1.]
+```
+- 샘플을 도미(1)로 올바르게 예측
+
+<br>
+
+> kneighbors() 함수로 샘플의 k-최근접 이웃 구한 후 산점도 확인
+```python
+  distances, indexes = kn.kneighbors([new])
+  plt.scatter(train_scaled[:, 0], train_scaled[:, 1])
+  plt.scatter(new[0], new[1], marker='^')
+  plt.scatter(train_scaled[indexes, 0], train_scaled[indexes, 1], marker='D')
+  plt.xlabel('length')
+  plt.ylabel('weight')
+  plt.show()
+```
+
+> 결과
+
+![image](https://github.com/user-attachments/assets/4a2b7dc3-12a3-49df-87fa-0456ac6e13eb)
+
+- 특성을 표준점수로 바꾸었기 때문에 k-최근접 이웃 알고리즘이 올바르게 거리 측정
+
+<br>
+
+---
+
+<br>
+
+핵심정리
+---
+- **데이터 전처리** : 머신러닝 모델에 훈련 데이터를 주입하기 전에 가공하는 단계
+
+  - 때로는 데이터 전처리에 많은 시간이 소모되기도 함
+ 
+- **표준점수** : 훈련 세트의 스케일을 바꾸는 대표적인 방법 중 하나
+
+  - 표준점수를 얻으려면 특성의 평균을 빼고 표준편차로 나눔
+ 
+  - 반드시 훈련 세트의 평균과 표준편차로 테스트 세트를 바꿔야 함
+ 
+- **브로드캐스팅** : 크기가 다른 넘파이 배열에서 자동으로 사칙 연산을 모든 행이나 열로 확장하여 수행하는 기능
+
+- **scikit-learn**
+
+  - **train_test_split()** : 훈련 데이터를 훈련 세트와 테스트 세트로 나누는 함수
+ 
+    - 여러 개의 배열 전달 가능
+   
+    - test_size 매개변수 : 테스트 세트로 나눌 비율
+   
+      - 기본값 : 0.25(25%)
+     
+    - shuffle 매개변수 : 훈련 세트와 테스트 세트로 나누기 전에 무작위로 섞을지 여부 결정
+   
+      - 기본값 : True
+     
+    - stratify 매개변수 : 클래스 레이블이 담긴 배열(일반적으로 타깃 데이터) 전달시 클래스 비율에 맞게 훈련 세트와 테스트 세트 분리
+   
+  - **kneighbors()** : k-최근접 이웃 객체의 메서드
+ 
+    - 입력한 데이터에 가장 가까운 이웃을 찾아 거리와 이웃 샘플의 인덱스 반환
+   
+    - 기본적으로 이웃의 개수는 KNeighborsClassifier 클래스의 객체를 생성할 때 지정한 개수를 사용
+   
+      - n_neighbors 매개변수에서 다르게 지정 가능
+     
+    - return_distance 매개변수 : 이웃 샘플의 거리 반환 여부 결정
+   
+      - 기본값 : True (이웃 샘플의 인덱스와 거리 반환)
+     
+        - False (이웃 샘플의 인덱스만 반환하거 거리는 반환 X)
+
+<br>
+
