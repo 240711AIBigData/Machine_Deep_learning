@@ -765,7 +765,231 @@
 <br>
 
  
+[03] 특성 공학과 규제
+### 01. 다중 회귀(multiple regression)
+- 여러 개의 특성을 사용한 선형 회귀
+
+- 특성이 2개면 선형 회귀는 평면을 학습
+
+  - 1개의 특성을 사용했을 때는 직선 학습
+
+<br>
+
+|특성 1개|특성 2개|
+|-|-|
+|![이미지](./img/05.png)|![이미지](./img/06.png)|
+
+- 특성이 2개면 타깃값과 함께 3차원 공간을 형성
+
+  - 선형 회귀 방정식 '타깃 = a * 특성1 + b * 특성2 + 절편'은 평면이 됨
+
+- 선형 회귀를 단순한 직선이나 평면으로 생각하여 성능이 무조건 낮다고 오해 X
+
+  - 특성이 많은 고차원에서는 선형 회귀가 매우 복잡한 모델 표현 가능
+
+- **특성 공학**(feature engineering)
+
+  - 기존의 특성을 사용해 새로운 특성을 뽑아내는 작업
+
+    - ex. 농어의 길이, 높이, 두께 함께 사용 → 각 특성을 서로 곱해 또 다른 특성 생성 (농어 길이 * 농어 높이)
+
+<br>
+
+### 02. 데이터 준비
+- **판다스**(pandas) : 데이터 분석 라이브러리
+
+  - **데이터프레임**(dataframe) : 판다스의 핵심 데이터 구조
+
+    - 넘파이 배열로 쉽게 바꿀 수 있음
+
+    - csv 파일 : 판다스 데이터프레임을 만들기 위해 많이 사용하는 파일
+
+      - 콤마로 나눠져있는 텍스트 파일
+
+  - 넘파이 배열과 비슷하게 다차원 배열을 다룰 수 있지만 훨씬 더 많은 기능 제공
+
+> csv 파일 읽어오기
+```python
+  import pandas as pd     # pd : 관례적으로ㅓ 사용하는 판다스의 별칭
+
+  df = pd.read_csv('https://bit.ly/perch_csv_data')
+  perch_full =df.to_numpy()
+  print(perch_full)
+```
+
+> 결과
+```python
+  [[ 8.4   2.11  1.41]
+  [13.7   3.53  2.  ]
+  [15.    3.82  2.43]
+    ...
+  [44.   12.49  7.6 ]]
+```
+
+<br>
+
+> 타깃 데이터
+```python
+  import numpy as np
+
+  perch_weight = np.array(
+      [5.9, 32.0, 40.0, 51.5, 70.0, 100.0, 78.0, 80.0, 85.0, 85.0,
+      110.0, 115.0, 125.0, 130.0, 120.0, 120.0, 130.0, 135.0, 110.0,
+      130.0, 150.0, 145.0, 150.0, 170.0, 225.0, 145.0, 188.0, 180.0,
+      197.0, 218.0, 300.0, 260.0, 265.0, 250.0, 250.0, 300.0, 320.0,
+      514.0, 556.0, 840.0, 685.0, 700.0, 700.0, 690.0, 900.0, 650.0,
+      820.0, 850.0, 900.0, 1015.0, 820.0, 1100.0, 1000.0, 1100.0,
+      1000.0, 1000.0]
+  )
+```
 
 
+<br>
+
+> 데이터 분리
+```python
+  from sklearn.model_selection import train_test_split
+  train_input, test_input, train_target, test_target = train_test_split(perch_full, perch_weight, random_state=42)
+```
+
+<br>
+
+### 03. 사이킷런의 변환기(transformer)
+- **변환기** : 특성을 만들거나 전처리하기 위한 다양한 클래스
+
+  - 모델 클래스 : fit(), score(), predict() 메서드 제공
+
+  - 변환기 클래스 : fit(), transform() 메서드 제공
+
+- LinearRegression 같은 사이킷런의 모델 클래스는 추정기(estimator)라고 부름
+
+<br>
+
+> PolynomialFeatures 클래스
+```python
+  from sklearn.preprocessing import PolynomialFeatures
+
+  poly = PolynomialFeatures()
+  poly.fit([[2, 3]])
+  print(poly.transform([[2, 3]]))
+
+  poly = PolynomialFeatures(include_bias=False)
+  poly.fit([[2, 3]])
+  print(poly.transform([[2, 3]]))
+```
+- fit() : 새롭게 만들 특성 조합 찾기
+
+  - 입력 데이터만 전달
+
+    - 변환기는 입력 데이터를 변환하는데 타깃 데이터 필요 X
+
+- transform() : 실제로 데이터를 변환
+
+- include_bias=False : 절편 항 포함 X
+
+  - 지정하지 않아도 사이킷런 모델은 자동으로 특성에 추가된 절편 항 무시
+
+> 결과
+```python
+  [[1. 2. 3. 4. 6. 9.]] # 결과1
+  [[2. 3. 4. 6. 9.]]    # 결과2
+``
+- 결과1 : 2개의 특성(원소)을 가진 샘플 [2, 3]이 6개의 특성을 가진 샘플로 바뀜
+
+  - 선형 방정식의 절편을 항상 값이 1인 특성과 곱해지는 계수라고 볼 수 있음
+
+  - 사이킷런의 선형 모델은 자동으로 절편을 추가함
+
+- 결과2 : 절편을 위한 항이 제거되고 특성의 제곱과 특성끼리 곱한 항만 추가됨
+
+<br>
+
+> 데이터 변환
+```python
+  # train_input 을 변환한 데이터를 train_poly 에 저장, 배열 크기 확인
+  poly = PolynomialFeatures(include_bias=False)
+  poly.fit(train_input)
+  train_poly = poly.transform(train_input)
+  print(train_poly.shape)
+
+  # 특성 조합 확인
+  print(poly.get_feature_names_out())
+
+  # 테스트 세트 변환
+  test_poly = poly.transform(test_input)
+```
+- PolynomialFeatures 클래스 : 특성이 어떻게 만들어졌는지 확인하는 방법 제공
+
+  - get_feature_names_out() 메서드 : 특성들이 각각 어떤 입력의 조합으로 만들어졌는지 확인 가능
+
+> 결과
+```python
+  (42, 9)
+  ['x0' 'x1' 'x2' 'x0^2' 'x0 x1' 'x0 x2' 'x1^2' 'x1 x2' 'x2^2']
+```
+- x0 : 첫 번째 특성, x0^2 : 첫 번째 특성의 제공, x0 x1 : 첫 번째 특성과 두 번째 특성의 곱을 나타냄
+
+<br>
+
+### 04. 다중 회귀 모델 훈련
+- 다중 회귀 모델을 훈련하는 것은 선형 회귀 모델을 훈련하는 것과 같음
+
+  - 여러 개의 특성을 사용하여 선형 회귀 수행하는 것
+
+> 훈련
+```python
+  from sklearn.linear_model import LinearRegression
+  lr = LinearRegression()
+  lr.fit(train_poly, train_target)
+  print(lr.score(train_poly, train_target))
+  print(lr.score(test_poly, test_target))
+```
+
+> 결과
+```python
+  0.9903183436982125
+  0.9714559911594155
+```
+- 높은 점수 : 특성이 늘어나면 선형 회귀의 능력은 매우 강함
+
+- 테스트 세트에 대한 점수는 높아지진 않았지만 농어의 길이만 사용했을 때 있던 과소적합 문제는 보이지 않음
+
+
+<br>
+
+
+> 특성 추가
+```python
+  # 5제곱까지 특성 만들어 출력
+  poly = PolynomialFeatures(degree=5, include_bias=False)
+  poly.fit(train_input)
+  train_poly = poly.transform(train_input)
+  test_poly = poly.transform(test_input)
+  print(train_poly.shape)
+
+  # 선형 회귀 모델 훈련
+  lr.fit(train_poly, train_target)
+  print(lr.score(train_poly, train_target))
+  print(lr.score(test_poly, test_target))
+```
+- PolynomialFeatures 클래스의 degree 매개변수를 사용해 필요한 고차항의 최대 차수 지정 가능
+
+> 결과
+```python
+  (42, 55)
+  0.9999999999938143
+  -144.40744532797535
+```
+- train_poly 배열의 열의 개수 = 특성의 개수 (55개)
+
+- 훈련 세트 점수는 완벽
+
+- 테스트 세트 점수는 음수
+
+  - 훈련 세트에 너무 과대적합되어 테스트 세트에서 형편없는 점수가 나온 것
+
+    - 해결하려면 특성을 줄이거나 규제 필요
+
+<br>
 
 
