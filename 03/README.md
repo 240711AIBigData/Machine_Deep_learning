@@ -181,15 +181,10 @@
 ```
 - 원본 배열의 원소는 4개인데 2 * 3 = 6 개로 바꾸려고 했기 때문에 에러 발생
 
-<br>
-
 </details>
 
 <br>
 
----
-
-<br>
 
 ### 03. 결정계수(R², coefficient of determination)
 - KNeighborsRegressor() : 사이킷런에서 k-최근접 이웃 회귀 알고리즘을 구현한 클래스
@@ -395,15 +390,239 @@
 
 <br>
 
+---
 
+<br>
 
+[2] 선형 회귀
+---
+### 01. k-최근접 이웃의 한계
+> 데이터 준비
+```python
+  import numpy as np
+  perch_length = np.array(
+      [8.4, 13.7, 15.0, 16.2, 17.4, 18.0, 18.7, 19.0, 19.6, 20.0,
+      21.0, 21.0, 21.0, 21.3, 22.0, 22.0, 22.0, 22.0, 22.0, 22.5,
+      22.5, 22.7, 23.0, 23.5, 24.0, 24.0, 24.6, 25.0, 25.6, 26.5,
+      27.3, 27.5, 27.5, 27.5, 28.0, 28.7, 30.0, 32.8, 34.5, 35.0,
+      36.5, 36.0, 37.0, 37.0, 39.0, 39.0, 39.0, 40.0, 40.0, 40.0,
+      40.0, 42.0, 43.0, 43.0, 43.5, 44.0]
+  )
+  
+  perch_weight = np.array(
+      [5.9, 32.0, 40.0, 51.5, 70.0, 100.0, 78.0, 80.0, 85.0, 85.0,
+      110.0, 115.0, 125.0, 130.0, 120.0, 120.0, 130.0, 135.0, 110.0,
+      130.0, 150.0, 145.0, 150.0, 170.0, 225.0, 145.0, 188.0, 180.0,
+      197.0, 218.0, 300.0, 260.0, 265.0, 250.0, 250.0, 300.0, 320.0,
+      514.0, 556.0, 840.0, 685.0, 700.0, 700.0, 690.0, 900.0, 650.0,
+      820.0, 850.0, 900.0, 1015.0, 820.0, 1100.0, 1000.0, 1100.0,
+      1000.0, 1000.0]
+  )
+```
 
+<br>
 
+> 훈련
+```python
+  from sklearn.model_selection import train_test_split
+  
+  # 훈련 세트와 테스트 세트로 나누기
+  train_input, test_input, train_target, test_target = train_test_split(perch_length, perch_weight, random_state=42)
+  
+  # 훈련 세트와 테스트 세트를 2차원 배열로 변경
+  train_input = train_input.reshape(-1, 1)
+  test_input = test_input.reshape(-1, 1)
+  
+  # 최근접 이웃 개수를 3으로 하는 모델 훈련
+  from sklearn.neighbors import KNeighborsRegressor
+  
+  knr = KNeighborsRegressor(n_neighbors=3)
+  
+  # k-최근접 이웃 회귀 모델 훈련
+  knr.fit(train_input, train_target)
+  
+  # 길이가 50cm 인 농어의 무게 예측
+  print(knr.predict([[50]]))
+```
 
+> 결과
+```python
+  [1033.33333333]
+```
+- 예측 무게는 1,033g 이지만, 실제 무게는 훨씬 더 많이 나감
 
+<br>
 
+> 최근접 이웃 산점도 확인
+```python
+  import matplotlib.pyplot as plt
+  
+  # 50cm 농어의 이웃 구하기
+  distances, indexes = knr.kneighbors([[50]])
+  
+  # 훈련 세트의 산점도 그리기
+  plt.scatter(train_input, train_target)
+  
+  # 훈련 세트 중에서 이웃 샘플만 다시 그리기
+  plt.scatter(train_input[indexes], train_target[indexes], marker='D')
+  
+  # 50cm 농어 데이터
+  plt.scatter(50, 1033, marker='^')
+  plt.xlabel('length')
+  plt.ylabel('weight')
+  plt.show()
 
+  # 이웃 샘플의 타깃 평균
+  print(np.mean(train_target[indexes]))
+```
+- k-최근접 이웃 모델의 kneighbors() 메서드 사용시 가장 가까운 이웃까지의 거리와 이웃 샘플의 인덱스 확인 가능
 
+> 결과
+
+![image](https://github.com/user-attachments/assets/ffa3a744-a342-471e-b99b-3baa527d49d9)
+
+```python
+  1033.3333333333333
+```
+- 50cm 농어에서 가장 가까운 것은 45cm 근방
+
+  - 이웃 샘플의 타깃의 평균 : 1033.3333333333333
+
+- 새로운 샘플이 훈련 세트의 범위를 벗어나면 엉뚱한 값 예측 가능성有
+
+<br>
+
+> 길이가 100cm 인 농어 무게 예측
+```python
+  print(knr.predict([[100]]))
+  
+  # 100cm 농어의 이웃 구하기
+  distances, indexes = knr.kneighbors([[100]])
+  
+  # 훈련 세트와 산점도 그리기
+  plt.scatter(train_input, train_target)
+  
+  # 훈련 세트 중에서 이웃 샘플만 다시 그리기
+  plt.scatter(train_input[indexes], train_target[indexes], marker='D')
+  
+  # 100cm 농어 데이터
+  plt.scatter(100, 1033, marker='^')
+  plt.xlabel('length')
+  plt.ylabel('weight')
+  plt.show()
+```
+
+> 결과
+```python
+  [1033.33333333]
+```
+
+![image](https://github.com/user-attachments/assets/0dc2cee8-077b-4d8c-b27e-57c3640fda0a)
+
+- 농어가 아무리 커도 무게가 더 늘어나지 않음
+
+<br>
+
+### 02. 선형 회귀(linear regression)
+- 널리 사용되는 대표적인 회귀 알고리즘
+
+- 비교적 간단하고 성능이 뛰어나 가장 먼저 배우는 머신러닝 알고리즘 중 하나
+
+- 특성이 하나인 경우 어떤 직선을 학습하는 알고리즘
+
+  - 특성을 가장 잘 나타낼 수 있는 직성 찾아야 함
+
+- 사이킷런은 sklearn.linear_model 패키지 아래 LinearRegressor 클래스로 선형 회귀 알고리즘 구현
+
+> 선형 회귀
+```python
+  from sklearn.linear_model import LinearRegression
+  lr = LinearRegression()
+  
+  # 선형 회귀 모델 훈련
+  lr.fit(train_input, train_target)
+  
+  # 50cm 농어에 대해 예측
+  print(lr.predict([[50]]))
+  
+  # 기울기(계수, coefficient / 가중치, weight), 절편(intercept) 확인
+  print(lr.coef_, lr.intercept_)
+```
+
+> 결과
+```python
+  [1241.83860323]
+  [39.01714496] -709.0186449535477
+```
+
+<br>
+
+<details>
+  <summary>💡 기울기와 절편</summary>
+
+<br>
+
+- 하나의 직선을 그리려면 기울기와 절편 필요
+
+- y = a * x + b
+
+  - x : 높어의 길이, y : 농어의 무게
+
+<br>
+
+|-|
+|-|
+|![이미지](./img/03.png)|
+
+</details>
+
+<br>
+
+#### 💡 용어 확인
+- coef_, intercept_ 를 머신러닝 알고리즘이 찾은 값이라는 의미로 **모델 파라미터**(model parameter) 라고 부름
+
+- **모델 기반 학습** : 머신러닝 알고리즘의 훈련 과정은 최적의 모델 파라미터를 찾는 것
+
+- **사례 기반 학습** : 모델 파라미터 없이 훈련 세트를 저장하는 것이 훈련의 전부인 것 (ex. k-최근접 이웃)
+
+<br>
+
+- 농어의 길이 15~50까지 직선으로 그리기 : 15, 50의 무게 잇기
+
+  - 농어 무게 = 기울기 * 농어 길이 + 절편
+
+> 훈련 세트의 산점도
+```python
+  # 훈련 세트의 산점도 그리기
+  plt.scatter(train_input, train_target)
+  
+  # 15에서 50까지 1차 방정식 그래프
+  plt.plot([15, 50], [15*lr.coef_+lr.intercept_, 50*lr.coef_+lr.intercept_])
+  
+  # 50cm 농어 데이터
+  plt.scatter(50, 1241.8, marker='^')
+  plt.xlabel('length')
+  plt.ylabel('weight')
+  plt.show()
+  
+  # 결정계수
+  print(lr.score(train_input, train_target))      # 훈련 세트
+  print(lr.score(test_input, test_target))        # 테스트 세트
+```
+
+> 결과
+
+![image](https://github.com/user-attachments/assets/df89961a-f77e-43e2-83e3-43671a8ca221)
+
+```python
+  0.939846333997604
+  0.8247503123313558
+```
+- 훈련 세트와 테스트 세트의 점수가 차이가 나지만 전체적으로 점수가 낮음
+
+  - 과소적합 + 다른 문제
+
+<br>
 
 
 
