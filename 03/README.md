@@ -394,7 +394,7 @@
 
 <br>
 
-[2] 선형 회귀
+[02] 선형 회귀
 ---
 ### 01. k-최근접 이웃의 한계
 > 데이터 준비
@@ -991,5 +991,147 @@
     - 해결하려면 특성을 줄이거나 규제 필요
 
 <br>
+
+### 05. 규제(regularization)
+- 머신러닝 모델이 훈련 세트를 너무 과도하게 학습하지 못하도록 훼방하는 것
+
+  - 모델이 훈련 세트에 과대적합되지 않도록 만드는 것
+
+  - 선형 회귀 모델의 경우 특성에 곱해지는 계수(또는 기울기)의 크기를 작게 만드는 일
+
+- 특성의 스케일이 정규화되지 않으면 곱해지는 계수 값 차이 발생
+
+  - 선형 회귀 모델에 규제를 적용할 때 계수 값의 크기가 서로 많이 다르면 공정한 제어 X
+
+- 선형 회귀 모델에 규제를 추가한 모델
+
+  - **릿지**(ridge) : 계수를 제곱한 값을 기준으로 규제 적용 (조금 더 선호)
+
+  - **라쏘**(lasso) : 계수의 절댓값을 기준으로 규제 적용 (0으로 만들 가능성 有)
+
+<br>
+
+> 정규화 (StandardScaler 사용)
+```python
+from sklearn.preprocessing import StandardScaler
+ss = StandardScaler()
+ss.fit(train_poly)
+train_scaled = ss.transform(train_poly)
+test_scaled = ss.transform(test_poly)
+```
+- StandardScaler 클래스의 객체 ss 초기화
+
+- PolynomialFeatures 클래스로 만든 train_poly 사용해 객체 훈련
+
+  - 훈련 세트로 학습한 변환기를 사용해 테스트 세트까지 변환
+
+- 훈련 세트에서 학습한 평균과 표준편차는 StandardScaler 클래스 객체의 mean_, scale_ 속성에 저장
+
+  - 특성마다 계산하므로 55개의 평균과 표준 편차 존재
+
+<br>
+
+### 06. 릿지 회귀
+- 모델 객체를 만들 때 alpha 매개변수로 규제의 강도 조절 가능
+
+  - alpha 값이 크면 규제의 강도 ↑
+
+    - 계수 값을 더 줄이고 조금 더 과소적합되도록 유도
+
+  - alpha 값이 작으면 규제의 강도 ↓
+  
+    - 계수를 줄이는 역할이 줄어들고 선형 회귀 모델과 유사해지므로 과대적합 가능성 커짐
+
+  - 적절한 alpha 값
+
+    - alpha 값에 대한 R² 그래프 그려서 훈련 세트와 테스트 세트의 점수가 가장 가까운 지점
+
+<br>
+
+> 릿지 회귀
+```python
+from sklearn.linear_model import Ridge
+ridge = Ridge()
+ridge.fit(train_scaled, train_target)
+print(ridge.score(train_scaled, train_target))
+print(ridge.score(test_scaled, test_target))
+```
+
+> 결과
+```python
+0.9896101671037343
+0.9790693977615392
+```
+- 훈련 세트에 과대적합되지 않아 테스트 세트에서도 좋은 성능 나타냄
+
+<br>
+
+> alpha
+```python
+import matplotlib.pyplot as plt
+# alpha 값을 바꿀 때마다 score() 메서드의 결과를 저장할 리스트 생성
+train_score = []
+test_score = []
+
+# alpha 값을 0.001~100 까지 10배씩 늘려가며 릿지회귀 모델 훈련
+alpha_list = [0.001, 0.01, 0.1, 1, 10, 100]
+for alpha in alpha_list:
+    # 릿지 모델 생성
+    ridge = Ridge(alpha=alpha)
+    # 릿지 모델 훈련
+    ridge.fit(train_scaled, train_target)
+    # 훈련 점수와 테스트 점수 저장
+    train_score.append(ridge.score(train_scaled, train_target))
+    test_score.append(ridge.score(test_scaled, test_target))
+    
+# R² 값 그래프
+plt.plot(np.log10(alpha_list), train_score)
+plt.plot(np.log10(alpha_list), test_score)
+plt.xlabel('alpha')
+plt.ylabel('R^2')
+plt.show()
+```
+- alpha 값일 0.001 부터 10배씩 늘렸기 때문에 그대로 그래프 그리면 왼쪽이 너무 촘촘해짐
+
+  - alpha_list 에 있는 6개의 값을 동일한 간격으로 나타내기 위해 로그 함수로 바꿔 지수로 표현
+
+    - 0.001 : -3, 0.01 : -2, ...
+
+- 넘파이 로그 함수
+
+  - np.log() : 자연 상수 e를 밑으로 하는 자연로그
+
+  - np.log10() : 10을 밑으로 하는 상용로그
+
+> 결과
+
+![alt text](image.png)
+
+- 위는 훈련 세트 그래프, 아래는 테스트 세트 그래프
+
+  - 그래프의 왼편 : 과대적합
+
+  - 그래프의 오른편 : 과소적합
+
+  - 적절한 alpha 값 : -1 (10⁻¹ = 0.1)
+
+<br>
+
+> 적절한 alpha 값으로 최종 모델 훈련
+```python
+ridge = Ridge(alpha=0.1)
+ridge.fit(train_scaled, train_target)
+print(ridge.score(train_scaled, train_target))
+print(ridge.score(test_scaled, test_target))
+```
+
+> 결과
+```python
+0.9903815817570367
+0.9827976465387017
+```
+
+<br>
+
 
 
