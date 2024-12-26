@@ -1105,7 +1105,7 @@ plt.show()
 
 > 결과
 
-![alt text](07.png)
+![alt text](./img/07.png)
 
 - 위는 훈련 세트 그래프, 아래는 테스트 세트 그래프
 
@@ -1201,7 +1201,7 @@ plt.show()
 
 > 결과
 
-![alt text](08.png)
+![alt text](./img/08.png)
 
 - 위는 훈련 세트 그래프, 아래는 테스트 세트 그래프
 
