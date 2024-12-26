@@ -1321,12 +1321,12 @@ print(np.sum(lasso.coef_ == 0))
 
       - random_state : solver 가 'sag', 'saga' 일 때 넘파이 난수 시드값 지정
 
-  - **Lasso** : 규제가 있는 회귀 알고리즘인 라쏘 회귀 모델 훈련
-
-    - 최적의 모델을 찾기 위해 좌표축을 따라 최적화를 수행해가는 좌표 하강법(coordinate descent) 사용
-
-      - alpha, random_state 매개변수는 Ridge 와 동일
-
-      - max_iter : 알고리즘의 수행 반복 횟수 지정, 기본값 1000
+    - **Lasso** : 규제가 있는 회귀 알고리즘인 라쏘 회귀 모델 훈련
+  
+      - 최적의 모델을 찾기 위해 좌표축을 따라 최적화를 수행해가는 좌표 하강법(coordinate descent) 사용
+  
+        - alpha, random_state 매개변수는 Ridge 와 동일
+  
+        - max_iter : 알고리즘의 수행 반복 횟수 지정, 기본값 1000
 
 <br>
