@@ -1105,7 +1105,7 @@ plt.show()
 
 > 결과
 
-![alt text](image.png)
+![alt text](07.png)
 
 - 위는 훈련 세트 그래프, 아래는 테스트 세트 그래프
 
@@ -1133,5 +1133,200 @@ print(ridge.score(test_scaled, test_target))
 
 <br>
 
+#### 💡 사람이 직접 지정해야 하는 매개변수
+- **하이퍼파라미터**(Hyperparameter)
 
+  - alpha 값처럼 릿지 모델이 학습하는 값이 아닌 사전에 사용자가 지정해야하는 값
 
+  - 즉, 머신러닝 모델의 학습할 수 없고 사람이 알려줘야 하는 파라미터
+
+- 사이킷런과 같은 머신러닝 라이브러리에서 하이퍼파라미터는 클래스와 메서드의 매개변수로 표현됨
+
+<br>
+
+### 07. 라쏘 회귀
+- Ridge 클래스를 Lasso 클래스로 바꾸기만 하면 돰
+
+- alpha 매개변수로 규제 강도 조절 가능
+
+- 라쏘 모델의 계수는 coef_ 속성에 저장되어 있음
+
+  - 계수가 0 인 특성 확인 가능
+
+    - 유용한 특성을 골라내는 용도로 사용 가능
+
+<br>
+
+> 라쏘 회귀
+```python
+from sklearn.linear_model import Lasso
+lasso = Lasso()
+lasso.fit(train_scaled, train_target)
+print(lasso.score(train_scaled, train_target))
+print(lasso.score(test_scaled, test_target))
+```
+
+> 결과
+```python
+0.989789897208096
+0.9800593698421884
+```
+
+<br>
+
+> alpha
+```python
+# alpha 값을 바꿀 때마다 score() 메서드의 결과를 저장할 리스트 생성
+train_score = []
+test_score = []
+
+# alpha 값을 0.001~100 까지 10배씩 늘려가며 릿지회귀 모델 훈련
+alpha_list = [0.001, 0.01, 0.1, 1, 10, 100]
+for alpha in alpha_list:
+    # 라쏘 모델 생성
+    lasso = Lasso(alpha=alpha)
+    # 라쏘 모델 훈련
+    lasso.fit(train_scaled, train_target)
+    # 훈련 점수와 테스트 점수 저장
+    train_score.append(lasso.score(train_scaled, train_target))
+    test_score.append(lasso.score(test_scaled, test_target))
+    
+# 그래프
+plt.plot(np.log10(alpha_list), train_score)
+plt.plot(np.log10(alpha_list), test_score)
+plt.xlabel('alpha')
+plt.ylabel('R^2')
+plt.show()
+```
+
+> 결과
+
+![alt text](08.png)
+
+- 위는 훈련 세트 그래프, 아래는 테스트 세트 그래프
+
+  - 그래프의 왼편 : 과대적합
+
+  - 그래프의 오른편 : 과소적합
+
+  - 적절한 alpha 값 : 1 (10¹ = 10)
+
+<br>
+
+> 최적의 alpha 값으로 최종 모델 훈련
+```python
+lasso = Lasso(alpha=10)
+lasso.fit(train_scaled, train_target)
+print(lasso.score(train_scaled, train_target))
+print(lasso.score(test_scaled, test_target))
+```
+
+> 결과
+```python
+0.9888067471131867
+0.9824470598706695
+```
+
+<br>
+
+> 계수가 0인 특성 개수
+```python
+print(np.sum(lasso.coef_ == 0))
+```
+- np.sum() : 배열을 모두 더한 값 반환
+
+  - 넘파이 배열에 비교 연산자를 사용했을 때 각 원소는 True/False 반환
+
+  - True=1, False=0 으로 인식하여 덧셈 가능 ⇒ 비교 연산자에맞는 원소 개수를 세는 효과
+
+> 결과
+```python
+40
+```
+- 55개의 특성을 모델에 주입했지만 사용한 특성은 불과 15개
+
+<br>
+
+---
+
+<br>
+
+핵심 요약
+---
+- **다중 회귀** : 여러 개의 특성을 사용하는 회귀 모델
+
+  - 특성이 많으면 선형 모델은 강력한 성능 발휘
+
+- **특성 공학** : 주어진 특성을 조합하여 새로운 특성을 만드는 일련의 작업 과정
+
+- **릿지** : 규제가 있는 선형 회귀 모델 중 하나
+
+  - 선형 모델의 계수를 작게 만들어 과대적합 완화
+
+  - 비교적 효과가 좋아 널리 사용하는 규제 방법
+
+- **라쏘** : 규제가 있는 선형 회귀 모델 중 하나
+
+  - 릿지와 달리 계수 값을 아예 0으로 만들 수도 있음
+
+- **하이퍼파라미터** : 머신러닝 알고리즘이 학습하지 않는 파라미터
+
+  - 사람이 사전에 지정해야 함
+
+  - ex. 릿지와 라쏘의 규제 강도 alpha 파라미터
+
+- **pandas**
+
+  - **read_csv()** : CSV 파일을 로컬 컴퓨터나 인터넷에서 읽어 판다스 데이터프레임으로 변환하는 함수
+
+    - 매우 많은 매개변수 제공
+
+      - sep : CSV 파일의 구분자 지정, 기본값 콤마(,)
+
+      - header : 데이터프레임의 열 이름으로 사용할 CSV 파일의 행 번호 지정
+
+        - 기본적으로 첫 번째 행을 열 이름으로 사용
+
+      - skiprows : 파일에서 읽기 전에 건널뛸 행의 개수 지정
+
+      - nrows : 파일에서 읽을 행의 개수 지정
+
+  - **scikit-learn**
+
+    - **PolynomialFeatures** : 주어진 특성을 조합하여 새로운 특성 생성
+
+      - degree : 최고 차수 지정, 기본값 2
+
+      - interaction_only : True 면 거듭제곱항은 제외되고 특성 간의 곱셈 항만 추가됨, 기본값 False
+
+      - include_bias : False 면 절편을 위한 특성 추가 X, 기본값 True
+
+    - **Ridge** : 규제가 있는 회귀 알고리즘인 릿지 회귀 모델 훈련
+
+      - alpha : 규제의 강도 조절
+
+        - 값이 클수록 규제가 세짐, 기본값 1
+
+      - solver : 최적의 모델을 찾기 위한 방법 지정 가능
+
+        - 기본값 'auto' : 데이터에 따라 자동으로 선택
+
+        - 'sag' : 확률적 평균 경사하강법 알고리즘으로 특성과 샘플 수가 많을 때 성능이 빠르고 좋음
+        
+          - 사이킷런 0.17 버전에 추가됨
+
+        - 'saga' : 'sag' 의 개선 버전
+
+          - 사이킷런 0.19 버전에 추가됨
+
+      - random_state : solver 가 'sag', 'saga' 일 때 넘파이 난수 시드값 지정
+
+  - **Lasso** : 규제가 있는 회귀 알고리즘인 라쏘 회귀 모델 훈련
+
+    - 최적의 모델을 찾기 위해 좌표축을 따라 최적화를 수행해가는 좌표 하강법(coordinate descent) 사용
+
+      - alpha, random_state 매개변수는 Ridge 와 동일
+
+      - max_iter : 알고리즘의 수행 반복 횟수 지정, 기본값 1000
+
+<br>
