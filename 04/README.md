@@ -275,9 +275,194 @@ print(train_target[indexes])
 <br>
 
 ### 02. 로지스틱 회귀(logistic regression)
+- 이름은 회귀지만 분류 모델
+
+- 선형 회귀와 동일하게 선형 방정식 학습
+
+- 사이킷런에는 로지스틱 회귀 모델인 LogisticRegression 클래스 존재
+
+<br>
+
+> 선형 방정식
+```
+z = a * (Weight) + b * (Length) + c * (Diagonal) + d * (Height) + e * (Width) + f
+```
+- a, b, c, d, e : 가중치 or 계수
+
+- 특성은 늘어났지만 다중 회귀를 위한 선형 방정식과 같음
+
+- z 는 어떤 값도 가능하지만 확률이 되려면 0~1(또는 0~100%) 사이 값이 되어야 함
+
+<br>
+
+- **시그모이드 함수**(sigmoid function)
+
+    - 로지스틱 함수(logistic function) 이라고도 함
+
+    - z가 아주 큰 음수일 때 0, 아주 큰 양수일 때 1이 되도록 바꾸는 방법
+
+    - 선형 방정식의 출력 z의 음수를 사용해 자연 상수 e를 거듭제곱하고 1을 더한 값의 역수
+
+        - z가 어떤 값이 되더라도 ∅ 는 0~1 사이의 범위를 벗어날 수 없음
+
+            - 0~1 사이 값을 0~100% 확률로 해석 가능
+
+<br>
+
+|시그모이드 함수와 그래프|
+|-|
+|![이미지]()|
 
 
+<br>
 
+> 시그모이드 함수 계산
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+z = np.arange(-5, 5, 0.1)
+phi = 1 / (1 + np.exp(-z))
+plt.plot(z, phi)
+plt.xlabel('z')
+plt.ylabel('phi')
+plt.show()
+```
+- -5 ~ 5 사이에 0.1 간격으로 배열 z 생성 후 z 위치마다 시그모이드 함수 계산
+
+- np.exp() 함수 : 지수 함수 계산
+
+> 결과
+
+![alt text](./img/02.png)
+
+<br>
+
+#### 02-1. 로지스틱 회귀로 이진 분류 수행
+- 이진 분류일 경우 시그모이드 함수의 출력이 0.5 보다 크면 양성 클래스, 작으면 음성 클래스로 판단
+
+    - 정확히 0.5 일 경우 라이브러리마다 다르지만, 사이킷런은 음성 클래스로 판단
+
+<br>
+
+> 도미(Bream)와 빙어(Smelt)만 골라 로지스틱 회귀 모델 훈련
+```python
+# 불리언 인덱싱을 이용하여 도미와 빙어 데이터 분리
+bream_smelt_indexes = (train_target == 'Bream') | (train_target == 'Smelt')
+train_bream_smelt = train_scaled[bream_smelt_indexes]
+target_bream_smelt = train_target[bream_smelt_indexes]
+
+# 로지스틱 회귀 모델 훈련
+from sklearn.linear_model import LogisticRegression
+lr = LogisticRegression()
+lr.fit(train_bream_smelt, target_bream_smelt)
+
+# train_bream_smelt 의 처음 5개 샘플 예측
+print(lr.predict(train_bream_smelt[:5]), '\n')
+
+# train_bream_smelt 의 처음 5개 샘플의 예측 확률
+print(lr.predict_proba(train_bream_smelt[:5]), '\n')
+
+# 음성 클래스(0), 양성 클래스(1) 확인
+print(lr.classes_, '\n')
+
+# 로지스틱 회귀가 학습한 계수
+print(lr.coef_, lr.intercept_)
+```
+- 비교 연산자를 사용해 도미와 빙어의 행을 모두 True 로 설정
+
+    - train_target == 'Bream' : train_target 배열에서 Bream 인 것은 True, 나머지는 False인 배열 반환
+
+    - 도미와 빙어에 대한 비교 결과를 비트 OR 연산자(|)를 사용해 합치기
+
+- 골라낸 배열을 사용해 train_scaeld, train_target 배열에 불리언 인덱싱 적용
+
+- LogisticRegression 클래스는 선형 모델이므로 sklearn.linear_model 패키지 아래 존재
+
+- predict_proba() : 예측 확률
+
+> 결과
+```python
+['Bream' 'Smelt' 'Bream' 'Bream' 'Bream'] 
+
+[[0.99760007 0.00239993]
+ [0.02737325 0.97262675]
+ [0.99486386 0.00513614]
+ [0.98585047 0.01414953]
+ [0.99767419 0.00232581]] 
+
+['Bream' 'Smelt'] 
+
+[[-0.40451732 -0.57582787 -0.66248158 -1.01329614 -0.73123131]] [-2.16172774]
+```
+- 두 번째 샘플 제외하고 모두 도미로 예측
+
+- 샘플마다 2개의 예측 확률 출력
+
+    - 첫 번째 열 : 음성 클래스(0)에 대한 확률
+
+    - 두 번째 열 : 양성 클래스(1)에 대한 확률
+
+    - 두 번째 샘플만 `음성 클래스 확률 < 양성 클래스 확률`
+
+- 사이킷런은 타깃값을 알파벳순으로 정렬하여 사용
+
+    - Bream : 음성 클래스, Smelt : 양성 클래스
+
+<br>
+
+> 위 로지스틱 회귀 모델이 학습한 방정식
+```
+z = -0.404 * (Weight) - 0.576 * (Length) - 0.663 * (Diagonal) - 1.013 * (Height) - 0.732 * (Width) - 2.161
+```
+
+<br>
+
+> LogisticRegression 모델로 z 값 계산
+```python
+# train_bream_smelt 의 처음 5개의 샘플의 z 값
+decisions = lr.decision_function(train_bream_smelt[:5])
+print(decisions, '\n')
+
+# decisions 배열의 값을 확률로 변환
+from scipy.special import expit
+print(expit(decisions))
+```
+- LogisticRegression 클래스는 decision_function() 메서드로 z 값 출력 가능
+
+- z 값을 시그모이드 함수에 통과시키면 확률 확인 가능
+
+    - 파이썬의 사이파이(scipy) 라이브러리에 시그모이드 함수 존재 : expit()
+
+        - np.exp() 함수로 분수 계산 하는 것보다 편리하고 안전
+
+> 결과
+```python
+[-6.02991358  3.57043428 -5.26630496 -4.24382314 -6.06135688] 
+
+[0.00239993 0.97262675 0.00513614 0.01414953 0.00232581]
+```
+- 출력된 확률 값 = predict_proba() 메서드 출력의 두 번째 열의 값
+
+    - decision_function() 메서드는 양성 클래스에 대한 z 값 반환
+
+<br>
+
+#### 💡 불리언 인덱싱(boolean indexing)
+- 넘파이 배열은 True, False 값을 전달하여 행 선택 가능
+
+> 
+```python
+char_arr = np.array(['A', 'B', 'C', 'D', 'E'])
+print(char_arr[[True, False, True, False, False]])
+```
+- A에서 ㄸ까지 5개의 원소로 이루어진 배열에서 A와 C만 골라내려면?
+
+    - 첫 번째, 세 번째 원소만 True, 나머지는 False 인 배열 전달
+
+> 결과
+```python
+['A' 'C']
+```
 
 <br>
 
